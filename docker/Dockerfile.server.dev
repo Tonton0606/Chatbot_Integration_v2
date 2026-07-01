@@ -1,0 +1,58 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# HERMES v2.2.1 — Server Container (Dev Mode)
+# Uses nodemon for hot-reload on file changes.
+# Volume-mounts the host server/ directory into the container.
+# ─────────────────────────────────────────────────────────────────────────────
+
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install system packages for dev
+RUN apk add --no-cache \
+    curl \
+    dumb-init \
+    netcat-openbsd \
+    python3 \
+    py3-pip \
+    ca-certificates
+
+# Install nodemon globally for hot reload
+RUN npm install -g nodemon pm2 && npm cache clean --force
+
+# Copy package files and install dependencies
+COPY server/package*.json ./
+RUN npm install
+
+# Copy source code (will be overridden by volume mount in dev)
+COPY server/ .
+
+# Copy infrastructure scripts
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY docker/healthcheck.sh /usr/local/bin/healthcheck.sh
+COPY docker/pm2.config.js /app/pm2.config.js
+RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/healthcheck.sh
+
+# Create directories
+RUN mkdir -p /var/log/hermes
+
+# Non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001 && \
+    chown -R nodejs:nodejs /app /var/log/hermes
+
+USER nodejs
+
+ENV NODE_ENV=development \
+    PORT=5000 \
+    SERVICE_NAME=server-dev \
+    LOG_LEVEL=debug
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD /usr/local/bin/healthcheck.sh server 5000
+
+EXPOSE 5000
+EXPOSE 9229  # Node.js debugger
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh", "--"]
+CMD ["nodemon", "--watch", ".", "--ext", "js,json", "--ignore", "node_modules/", "server.js"]

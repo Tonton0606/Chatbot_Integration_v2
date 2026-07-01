@@ -1,0 +1,686 @@
+/* ============================================================
+   Hermes2 / ExponifyPH
+   Client → Facebook Connect
+   Uses actual Hermes shell tokens from index.css:
+   --bg-card, --hover-bg, --text-primary, --text-secondary,
+   --text-muted, --border-color, --brand-gold, --brand-cyan
+   ============================================================ */
+
+.facebook-connect-page {
+  min-width: 0;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+/* Header */
+
+.facebook-connect-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  border: 1px solid var(--border-color);
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at top left, rgba(201, 168, 76, 0.12), transparent 34%),
+    var(--bg-card);
+  padding: 24px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
+}
+
+.facebook-connect-title-block {
+  min-width: 0;
+}
+
+.facebook-connect-eyebrow {
+  margin: 0;
+  color: var(--brand-gold);
+  font-size: 13px;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.facebook-connect-title {
+  margin: 8px 0 0;
+  color: var(--text-primary);
+  font-size: 30px;
+  font-weight: 950;
+  letter-spacing: -0.04em;
+}
+
+.facebook-connect-subtitle {
+  margin: 8px 0 0;
+  max-width: 780px;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.facebook-connect-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Buttons */
+
+.facebook-connect-button {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  padding: 8px 14px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 850;
+  cursor: pointer;
+  transition: 0.18s ease;
+  white-space: nowrap;
+}
+
+.facebook-connect-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: var(--hover-bg);
+}
+
+.facebook-connect-button-primary {
+  border-color: var(--brand-gold-border);
+  background: linear-gradient(135deg, var(--brand-gold), var(--brand-gold-hover));
+  color: #050816;
+}
+
+.facebook-connect-button-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--brand-gold-hover), var(--brand-gold));
+  color: #050816;
+  box-shadow: 0 12px 28px rgba(201, 168, 76, 0.24);
+}
+
+.facebook-connect-button:disabled,
+.facebook-connect-action-link:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  transform: none;
+}
+
+/* Tabs / Main Content */
+
+.facebook-connect-tabs-wrap {
+  border: 1px solid var(--border-color);
+  border-radius: 22px;
+  background: var(--bg-card);
+  padding: 8px;
+}
+
+.facebook-connect-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.facebook-connect-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  background: transparent;
+  color: var(--text-secondary);
+  padding: 10px 14px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 850;
+  cursor: pointer;
+  transition: 0.18s ease;
+  white-space: nowrap;
+}
+
+.facebook-connect-tab:hover,
+.facebook-connect-tab-active {
+  border-color: var(--brand-gold-border);
+  background: var(--brand-gold-soft);
+  color: var(--brand-gold);
+}
+
+.facebook-connect-content {
+  min-width: 0;
+}
+
+.facebook-connect-grid {
+  display: grid;
+  gap: 20px;
+}
+
+/* Panels */
+
+.facebook-connect-panel {
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  background: var(--bg-card);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.12);
+}
+
+.facebook-connect-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--hover-bg);
+  padding: 16px 18px;
+}
+
+.facebook-connect-panel-title {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 950;
+}
+
+.facebook-connect-panel-description {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+/* KPIs */
+
+.facebook-connect-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.facebook-connect-kpi {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(138, 148, 166, 0.18);
+  border-radius: 24px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.05), transparent),
+    var(--bg-card);
+  padding: 18px;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.12);
+  transition: 0.18s ease;
+}
+
+.facebook-connect-kpi::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-top: 3px solid var(--brand-cyan);
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.facebook-connect-kpi:hover {
+  transform: translateY(-2px);
+  border-color: var(--brand-cyan-border);
+}
+
+.facebook-connect-kpi-label {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.facebook-connect-kpi-value {
+  margin: 8px 0 0;
+  color: var(--text-primary);
+  font-size: 30px;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.facebook-connect-kpi-hint {
+  margin: 8px 0 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+/* Overview */
+
+.facebook-connect-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.facebook-connect-overview-grid > .facebook-connect-kpi-grid {
+  grid-column: 1 / -1;
+}
+
+.facebook-connect-overview-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(138, 148, 166, 0.18);
+  border-radius: 24px;
+  background: var(--bg-card);
+  padding: 18px;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.55;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.12);
+}
+
+.facebook-connect-overview-card::before {
+  content: "";
+  display: block;
+  height: 3px;
+  width: calc(100% + 36px);
+  margin: -18px -18px 14px;
+  background: var(--brand-gold);
+}
+
+.facebook-connect-overview-card strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 950;
+}
+
+/* Tables */
+
+.facebook-connect-table-wrap {
+  overflow-x: auto;
+  background: var(--bg-card);
+}
+
+.facebook-connect-table {
+  width: 100%;
+  min-width: 860px;
+  border-collapse: collapse;
+  background: var(--bg-card);
+}
+
+.facebook-connect-table thead tr {
+  background: var(--hover-bg);
+}
+
+.facebook-connect-table th {
+  padding: 14px 16px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 950;
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.facebook-connect-table td {
+  border-top: 1px solid var(--border-color);
+  padding: 14px 16px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+  vertical-align: top;
+}
+
+.facebook-connect-table tbody tr:hover {
+  background: var(--hover-bg);
+}
+
+.facebook-connect-table strong {
+  display: block;
+  color: var(--text-primary);
+  font-weight: 950;
+}
+
+/* Badges / Chips */
+
+.facebook-connect-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(22, 163, 74, 0.35);
+  border-radius: 999px;
+  background: var(--success-soft);
+  color: var(--success);
+  padding: 4px 9px;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.facebook-connect-badge::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+/* Empty / Alerts */
+
+.facebook-connect-empty {
+  display: flex;
+  min-height: 180px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px dashed var(--border-color);
+  border-radius: 24px;
+  background: var(--bg-card);
+  padding: 28px;
+  color: var(--text-muted);
+  text-align: center;
+  font-size: 13px;
+}
+
+.facebook-connect-alert {
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  background: var(--hover-bg);
+  color: var(--text-secondary);
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.facebook-connect-alert strong {
+  color: var(--text-primary);
+  font-weight: 950;
+}
+
+/* Forms */
+
+.facebook-connect-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  padding: 18px;
+}
+
+.facebook-connect-form-grid-flush {
+  padding: 0;
+}
+
+.facebook-connect-field {
+  display: block;
+  min-width: 0;
+}
+
+.facebook-connect-field-full {
+  grid-column: 1 / -1;
+}
+
+.facebook-connect-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.facebook-connect-input,
+.facebook-connect-textarea,
+.facebook-connect-select {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  padding: 0 12px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  outline: none;
+  transition: 0.18s ease;
+  box-sizing: border-box;
+}
+
+.facebook-connect-textarea {
+  min-height: 110px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  resize: vertical;
+  line-height: 1.55;
+}
+
+.facebook-connect-input::placeholder,
+.facebook-connect-textarea::placeholder {
+  color: var(--text-muted);
+  opacity: 0.78;
+}
+
+.facebook-connect-input:focus,
+.facebook-connect-textarea:focus,
+.facebook-connect-select:focus {
+  border-color: var(--brand-gold-border);
+  box-shadow: 0 0 0 3px var(--brand-gold-soft);
+}
+
+.facebook-connect-inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.facebook-connect-action-link {
+  border: 0;
+  background: transparent;
+  color: var(--brand-gold);
+  padding: 0;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.facebook-connect-action-link:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.facebook-connect-action-danger {
+  color: var(--danger);
+}
+
+/* Modal */
+
+.facebook-connect-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(2, 6, 23, 0.68);
+  backdrop-filter: blur(5px);
+  padding: 20px;
+}
+
+.facebook-connect-modal {
+  width: min(620px, 100%);
+  max-height: min(90vh, 760px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  background: var(--bg-card);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
+  animation: facebook-connect-modal-in 0.18s ease;
+}
+
+@keyframes facebook-connect-modal-in {
+  from {
+    transform: translateY(18px) scale(0.98);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.facebook-connect-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--hover-bg);
+  padding: 18px 20px;
+}
+
+.facebook-connect-modal-title {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 17px;
+  font-weight: 950;
+}
+
+.facebook-connect-modal-description {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.facebook-connect-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  display: grid;
+  gap: 14px;
+  background: var(--bg-card);
+  padding: 20px;
+}
+
+.facebook-connect-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  border-top: 1px solid var(--border-color);
+  padding-top: 16px;
+}
+
+/* Scrollbars */
+
+.facebook-connect-page ::-webkit-scrollbar,
+.facebook-connect-modal-body::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.facebook-connect-page ::-webkit-scrollbar-track,
+.facebook-connect-modal-body::-webkit-scrollbar-track {
+  background: var(--hover-bg);
+  border-radius: 10px;
+}
+
+.facebook-connect-page ::-webkit-scrollbar-thumb,
+.facebook-connect-modal-body::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 10px;
+}
+
+.facebook-connect-page ::-webkit-scrollbar-thumb:hover,
+.facebook-connect-modal-body::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Responsive */
+
+@media (max-width: 1180px) {
+  .facebook-connect-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .facebook-connect-actions {
+    justify-content: flex-start;
+  }
+
+  .facebook-connect-kpi-grid,
+  .facebook-connect-overview-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .facebook-connect-page {
+    gap: 18px;
+  }
+
+  .facebook-connect-header {
+    border-radius: 24px;
+    padding: 20px;
+  }
+
+  .facebook-connect-title {
+    font-size: 24px;
+  }
+
+  .facebook-connect-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .facebook-connect-tabs {
+    gap: 8px;
+  }
+
+  .facebook-connect-tab {
+    padding: 9px 12px;
+  }
+
+  .facebook-connect-actions {
+    width: 100%;
+  }
+
+  .facebook-connect-actions .facebook-connect-select,
+  .facebook-connect-actions .facebook-connect-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .facebook-connect-kpi-grid,
+  .facebook-connect-overview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .facebook-connect-modal-backdrop {
+    align-items: stretch;
+    padding: 12px;
+  }
+
+  .facebook-connect-modal {
+    max-height: 100%;
+    border-radius: 20px;
+  }
+
+  .facebook-connect-modal-header {
+    flex-direction: column;
+  }
+
+  .facebook-connect-modal-footer {
+    flex-direction: column-reverse;
+  }
+
+  .facebook-connect-modal-footer .facebook-connect-button {
+    width: 100%;
+  }
+}

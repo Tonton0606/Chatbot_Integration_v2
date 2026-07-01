@@ -1,0 +1,78 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# HERMES v2.2.1 — Google Maps Lead Generator Microservice (Isolated Container)
+# Standalone Flask HTTP service. No Node.js dependency.
+# Communicates with the server container via HTTP API.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Stage 1: Python Dependencies ─────────────────────────────────────────────
+FROM python:3.11-slim AS deps
+
+WORKDIR /app
+
+# Install build deps needed for some packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY server/services/googleMapsLeads/requirements.txt /tmp/requirements.txt
+
+# Upgrade pip and install dependencies
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir -r /tmp/requirements.txt && \
+    pip install --no-cache-dir flask gunicorn && \
+    rm /tmp/requirements.txt
+
+# ── Stage 2: Runtime ─────────────────────────────────────────────────────────
+FROM python:3.11-slim AS runtime
+
+WORKDIR /app
+
+# Install runtime system packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy Python dependencies from deps stage
+COPY --from=deps /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=deps /usr/local/bin /usr/local/bin
+
+# Copy the Google Maps service source code
+COPY server/services/googleMapsLeads/ .
+
+# Copy the Flask HTTP server
+COPY server/services/googleMapsLeads/gmaps_http_server.py /app/gmaps_http_server.py
+
+# Copy infrastructure scripts
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY docker/healthcheck.sh /usr/local/bin/healthcheck.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/healthcheck.sh
+
+# Create directories
+RUN mkdir -p /var/log/hermes /app/output
+
+# Non-root user
+RUN groupadd -g 1001 -r hermes && \
+    useradd -r -g hermes -u 1001 -d /app -s /sbin/nologin hermes && \
+    chown -R hermes:hermes /app /var/log/hermes
+
+USER hermes
+
+# Environment
+ENV FLASK_PORT=8000 \
+    SERVICE_NAME=gmaps \
+    PYTHONUNBUFFERED=1
+
+# Health check probes HTTP endpoint
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+    CMD /usr/local/bin/healthcheck.sh gmaps 8000
+
+EXPOSE 8000
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh", "--"]
+
+# Use gunicorn for production-grade HTTP serving
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "2", "--threads", "4", \
+     "--timeout", "300", "--log-level", "info", \
+     "gmaps_http_server:app"]

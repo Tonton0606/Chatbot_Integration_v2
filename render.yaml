@@ -1,0 +1,147 @@
+services:
+  # Backend API Service
+  - type: web
+    name: hermes-backend
+    env: docker
+    runtime: docker
+    dockerfilePath: ./docker/Dockerfile.server
+    dockerContext: .
+    plan: standard
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: FRONTEND_URL
+        value: https://hermesv2-frontend.onrender.com
+      - key: BASE_URL
+        sync: false
+      - key: PUBLIC_BASE_URL
+        sync: false
+      - key: FACEBOOK_WEBHOOKS
+        sync: false
+      - key: TIKTOK_WEBHOOKS
+        sync: false
+      - key: FB_VERIFY_TOKEN
+        sync: false
+      - key: FB_APP_SECRET
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      # AI providers
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: NVIDIA_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: SERPER_API_KEY
+        sync: false
+      # PayMongo (PH gateway — optional, COD works without key)
+      - key: PAYMONGO_SECRET_KEY
+        sync: false
+      - key: PAYMONGO_WEBHOOK_SECRET
+        sync: false
+      # Email
+      - key: EMAIL_PROVIDER
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: SENDGRID_API_KEY
+        sync: false
+      # Stripe (SaaS billing)
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_STARTER_PRICE_ID
+        sync: false
+      - key: STRIPE_PROFESSIONAL_PRICE_ID
+        sync: false
+      - key: STRIPE_ENTERPRISE_PRICE_ID
+        sync: false
+      # URLs
+      - key: BACKEND_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      # Grafana Cloud Loki — production log shipping
+      # Get these from: grafana.com → My Account → Stack → Loki → Send Logs
+      #   GRAFANA_LOKI_URL : https://logs-prod-XXX.grafana.net
+      #   GRAFANA_LOKI_USER: your numeric Loki user ID
+      #   GRAFANA_LOKI_API_KEY: your Grafana Cloud API key (Logs:Write scope)
+      - key: GRAFANA_LOKI_URL
+        sync: false
+      - key: GRAFANA_LOKI_USER
+        sync: false
+      - key: GRAFANA_LOKI_API_KEY
+        sync: false
+    # Liveness probe — Render restarts the instance if this fails, so it must not
+    # depend on Supabase (a DB blip should not cycle the app). /health stays the
+    # DB-aware readiness check.
+    healthCheckPath: /livez
+
+  # Static Site Service for Frontend
+  - type: web
+    name: hermes-frontend
+    env: static
+    buildCommand: cd client && npm install && npm run build
+    staticPublishPath: ./client/dist
+    rootDir: .
+    nodeVersion: 20
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false
+      - key: VITE_API_BASE_URL
+        value: https://hermesbackend-j1w5.onrender.com/api
+      - key: VITE_API_URL
+        value: https://hermesbackend-j1w5.onrender.com/api
+      - key: VITE_BACKEND_URL
+        sync: false
+      - key: VITE_RECAPTCHA_SITE_KEY
+        sync: false
+      - key: VITE_META_PIXEL_ID
+        sync: false
+      - key: VITE_PUBLIC_SITE_URL
+        sync: false
+      - key: VITE_RENDER_CUSTOM_DOMAIN_TARGET
+        sync: false
+    routes:
+      - type: rewrite
+        source: /Admin/*
+        destination: /index.html
+      - type: rewrite
+        source: /Client/*
+        destination: /index.html
+      - type: rewrite
+        source: /auth
+        destination: /index.html
+      - type: rewrite
+        source: /login
+        destination: /index.html
+      - type: rewrite
+        source: /signup
+        destination: /index.html
+      - type: rewrite
+        source: /*
+        destination: /index.html

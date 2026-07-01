@@ -1,0 +1,88 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# HERMES v2.2.1 — Client Container (Multi-Stage Build)
+# Stage 1: builder  — Vite production build
+# Stage 2: runtime  — Nginx alpine serving static assets
+#
+# This image is fully self-contained: no dependencies at runtime.
+# Healthcheck probes the static SPA served on port 80.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Stage 1: Vite Build ─────────────────────────────────────────────────────
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# ── Build-time env vars (VITE_ are baked into the JS bundle at build time) ──
+# Pass all VITE_ vars via --build-arg when building, or set in docker-compose
+# build.args section. They are NOT available at runtime in the nginx container.
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_ANON_KEY
+ARG VITE_API_BASE_URL
+ARG VITE_API_URL
+ARG VITE_BACKEND_URL
+ARG VITE_RECAPTCHA_SITE_KEY
+ARG VITE_META_PIXEL_ID
+ARG VITE_PUBLIC_SITE_URL
+ARG VITE_RENDER_CUSTOM_DOMAIN_TARGET
+
+# Expose ARGs as ENV so Vite picks them up during `npm run build`
+ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL \
+    VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY \
+    VITE_API_BASE_URL=$VITE_API_BASE_URL \
+    VITE_API_URL=$VITE_API_URL \
+    VITE_BACKEND_URL=$VITE_BACKEND_URL \
+    VITE_RECAPTCHA_SITE_KEY=$VITE_RECAPTCHA_SITE_KEY \
+    VITE_META_PIXEL_ID=$VITE_META_PIXEL_ID \
+    VITE_PUBLIC_SITE_URL=$VITE_PUBLIC_SITE_URL \
+    VITE_RENDER_CUSTOM_DOMAIN_TARGET=$VITE_RENDER_CUSTOM_DOMAIN_TARGET
+
+# Copy package files for layer caching
+COPY client/package*.json ./
+
+# Install dependencies
+RUN npm ci && npm cache clean --force
+
+# Copy source code
+COPY client/ .
+
+# Build production bundle — VITE_ vars are now baked into the output JS
+RUN npm run build
+
+# ── Stage 2: Nginx Production Serve ─────────────────────────────────────────
+FROM nginx:1.27-alpine AS runtime
+
+# Install curl for healthcheck, netcat for dependency waits
+RUN apk add --no-cache curl netcat-openbsd tzdata
+
+# Remove default nginx config
+RUN rm -f /etc/nginx/conf.d/default.conf
+
+# Copy custom nginx config
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+
+# Copy built static assets from builder
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Copy infrastructure scripts
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY docker/healthcheck.sh /usr/local/bin/healthcheck.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/healthcheck.sh
+
+# Create log directory
+RUN mkdir -p /var/log/hermes && chmod 755 /var/log/hermes
+
+# Non-root user: nginx runs as nginx user by default
+# Grant nginx user access to logs
+RUN chown -R nginx:nginx /var/log/hermes /var/cache/nginx /var/run
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD /usr/local/bin/healthcheck.sh client 80
+
+ENV SERVICE_NAME=client
+
+EXPOSE 80
+
+# Use nginx -g "daemon off;" so nginx stays in foreground
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh", "--"]
+CMD ["nginx", "-g", "daemon off;"]

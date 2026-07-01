@@ -1,0 +1,43 @@
+{
+  "name": "Exponify — Business Management Platform",
+  "short_name": "Exponify",
+  "description": "All-in-one CRM, Marketing, Accounting & AI Platform for Philippine SMEs",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#d4a017",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "categories": ["business", "productivity", "finance"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "url": "/Client/Dashboard",
+      "description": "View your workspace dashboard"
+    },
+    {
+      "name": "CRM",
+      "url": "/Client/CRM",
+      "description": "Access customer relationship management"
+    },
+    {
+      "name": "Inbox",
+      "url": "/Client/Inbox",
+      "description": "View messages and conversations"
+    },
+    {
+      "name": "Tasks",
+      "url": "/Client/Tasks",
+      "description": "Manage your tasks"
+    }
+  ]
+}

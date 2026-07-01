@@ -1,0 +1,11 @@
+export { default as CRMOpportunityDrawer } from "./CRMOpportunityDrawer.jsx";
+export { default as CRMPipelineSnapshot } from "./CRMPipelineSnapshot.jsx";
+export { default as CRMRecentActivities } from "./CRMRecentActivities.jsx";
+export { default as CRMReportingSummary } from "./CRMReportingSummary.jsx";
+export { default as CRMTopOpportunities } from "./CRMTopOpportunities.jsx";
+export { default as SalesCRMEmptyState } from "./SalesCRMEmptyState.jsx";
+export { default as SalesCRMErrorState } from "./SalesCRMErrorState.jsx";
+export { default as SalesCRMHeader } from "./SalesCRMHeader.jsx";
+export { default as SalesCRMKpiCard } from "./SalesCRMKpiCard.jsx";
+export { default as SalesCRMLoadingState } from "./SalesCRMLoadingState.jsx";
+export { buildCRMKPIs } from "./crmUtils.js";

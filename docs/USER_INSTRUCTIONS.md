@@ -1,0 +1,1 @@
+Ensure the admin panel is accessible to users with the appropriate permissions.

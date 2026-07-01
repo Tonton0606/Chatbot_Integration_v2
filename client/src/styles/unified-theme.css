@@ -1,0 +1,171 @@
+/* Unified Theme System - Blends Landing Page and Admin Panel Colors */
+
+:root {
+  /* Primary Color Palette - Based on Landing Page Gold Theme */
+  --primary-50: #fef3e2;
+  --primary-100: #fde8c7;
+  --primary-200: #fbd38e;
+  --primary-300: #f9b835;
+  --primary-400: #f5932c;
+  --primary-500: #ee6c3e;
+  --primary-600: #c9a84c; /* Main Gold Color */
+  --primary-700: #a17d3a;
+  --primary-800: #7e5e33;
+  --primary-900: #4e2e24;
+
+  /* Dark Navy Background - From Landing Page */
+  --navy-50: #0a0e1a;
+  --navy-100: #0f1528;
+  --navy-200: #151d38;
+  --navy-300: #1a2b48;
+  --navy-400: #1f3458;
+  --navy-500: #243b68;
+  --navy-600: #0a0e1a; /* Main Navy Background */
+  --navy-700: #081429;
+  --navy-800: #060f1f;
+  --navy-900: #030a14;
+
+  /* Accent Colors */
+  --accent-blue: #3b82f6;
+  --accent-emerald: #10b981;
+  --accent-purple: #8b5cf6;
+  --accent-pink: #ec4899;
+  --accent-gold: #f59e0b;
+  --accent-yellow: #eab308;
+
+  /* Semantic Colors */
+  --background: var(--navy-600);
+  --foreground: #f5f0e8;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --popover: #151d38;
+  --popover-foreground: #f5f0e8;
+  --card: #0f1528;
+  --card-foreground: #f5f0e8;
+  --border: rgba(201, 168, 76, 0.18);
+  --input: #151d38;
+  --ring: #c9a84c;
+
+  /* Landing Page Specific Colors */
+  --ep-gold: #c9a84c;
+  --ep-gold-light: #e2c07a;
+  --ep-white: #f5f0e8;
+  --ep-white-dim: rgba(245, 240, 232, 0.72);
+  --ep-border: rgba(201, 168, 76, 0.18);
+  --ep-navy: #0a0e1a;
+  --ep-navy-mid: #0f1528;
+  --ep-navy-light: #151d38;
+  --ep-ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Light Theme Adjustments */
+.light {
+  --background: #ffffff;
+  --foreground: #0a0e1a;
+  --card: #f8fafc;
+  --card-foreground: #0a0e1a;
+  --popover: #ffffff;
+  --popover-foreground: #0a0e1a;
+  --border: #e2e8f0;
+  --input: #ffffff;
+  --muted: #f1f5f9;
+  --muted-foreground: #94a3b8;
+}
+
+/* Admin Panel Theme Overrides */
+.admin-panel {
+  --background: var(--navy-600);
+  --card: var(--navy-200);
+  --card-foreground: var(--ep-white);
+  --border: var(--ep-border);
+  --input: var(--navy-100);
+  --muted: var(--navy-300);
+  --muted-foreground: var(--ep-white-dim);
+}
+
+/* Landing Page Theme */
+.landing-page {
+  --background: var(--navy-600);
+  --primary: var(--ep-gold);
+  --card: var(--navy-200);
+  --card-foreground: var(--ep-white);
+  --border: var(--ep-border);
+}
+
+/* Unified Component Styles */
+.unified-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.unified-card:hover {
+  box-shadow: 0 8px 30px rgba(201, 168, 76, 0.4);
+  transform: translateY(-2px);
+}
+
+.unified-button {
+  background: var(--primary-600);
+  color: var(--ep-white);
+  border: 1px solid var(--primary-700);
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.unified-button:hover {
+  background: var(--primary-700);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(201, 168, 76, 0.4);
+}
+
+.unified-button.secondary {
+  background: var(--navy-200);
+  color: var(--ep-white);
+  border: 1px solid var(--border);
+}
+
+.unified-button.secondary:hover {
+  background: var(--navy-300);
+}
+
+/* Smooth Transitions */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: var(--navy-600);
+    --foreground: var(--ep-white);
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--navy-300);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary-600);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-700);
+}
+
+/* Landing Builder Preview Selection */
+.landing-preview-highlight {
+  outline: 3px solid var(--brand-gold, var(--ep-gold)) !important;
+  outline-offset: 4px;
+  box-shadow: 0 0 0 4px rgba(201, 168, 76, 0.18) !important;
+}

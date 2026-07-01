@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "teammate": {
+      "command": "node",
+      "args": ["/home/kaliparrot/PRODUCTION-HERMESV2.2.2/mcp-teammate/server.js"],
+      "type": "stdio"
+    }
+  }
+}

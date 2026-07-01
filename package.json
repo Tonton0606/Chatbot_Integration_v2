@@ -1,0 +1,19 @@
+{
+  "name": "hermes-1.0",
+  "version": "1.0.0",
+  "description": "Hermes 1.0 - Enterprise Management Platform with AI-powered features",
+  "scripts": {
+    "build": "cd client && npm install && npm run build",
+    "dev": "concurrently \"npm run dev:client\" \"npm run dev:api\"",
+    "dev:client": "cd client && npm run dev",
+    "dev:api": "nodemon --signal SIGKILL --delay 1000ms server/server.js",
+    "start": "cd client && npm run preview",
+    "install:all": "npm install && cd client && npm install && cd ../server && npm install"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.103.0"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}

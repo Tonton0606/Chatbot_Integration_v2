@@ -1,0 +1,49 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# Grafana Datasource Provisioning — Hermes
+#
+# Datasources are auto-loaded on Grafana startup. Changes here take effect
+# on container restart — no manual Grafana UI work needed.
+#
+# Datasource 1: Loki  — operational log search (default)
+# Datasource 2: PostgreSQL → Supabase direct DB — KPI / business metric queries
+#   Requires env vars in docker-compose.override.yml:
+#     SUPABASE_DB_HOST     e.g. db.xxxx.supabase.co
+#     SUPABASE_DB_USER     postgres
+#     SUPABASE_DB_PASSWORD your-db-password (NOT the anon/service-role JWT)
+#   Find these in Supabase Dashboard → Project Settings → Database → Connection info
+# ═══════════════════════════════════════════════════════════════════════════════
+
+apiVersion: 1
+
+datasources:
+
+  # ── Loki — primary log datasource ───────────────────────────────────────────
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    isDefault: true
+    jsonData:
+      maxLines: 5000
+      # Derived field: turn reqId values into a clickable trace link
+      # (links between log lines sharing the same x-request-id)
+      derivedFields:
+        - name: reqId
+          matcherRegex: '"reqId":"([^"]+)"'
+          url: '/explore?left={"datasource":"Loki","queries":[{"expr":"{container=~\"hermes-.+\"} |= \"$${__value.raw}\""}]}'
+          urlDisplayLabel: Trace all containers
+
+  # ── PostgreSQL → Supabase ────────────────────────────────────────────────────
+  # Optional — skip if SUPABASE_DB_HOST is not set.
+  # Used for KPI queries (commissions, leads, ARR) directly against the DB.
+  - name: Hermes-DB
+    type: postgres
+    url: ${SUPABASE_DB_HOST}:5432
+    database: postgres
+    user: ${SUPABASE_DB_USER}
+    secureJsonData:
+      password: ${SUPABASE_DB_PASSWORD}
+    jsonData:
+      sslmode: require
+      postgresVersion: 1500
+      timescaledb: false

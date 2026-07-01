@@ -1,0 +1,332 @@
+# ═════════════════════════════════════════════════════════════════════════════
+# HERMES v2.2.1 — Production Docker Compose
+# =============================================================================
+# ARCHITECTURE PRINCIPLES:
+# 1. ONE SERVICE PER CONTAINER — No module shares a container with another.
+#    Blast radius = exactly one container. A crash in gmaps never kills redis.
+# 2. restart: unless-stopped — Every service, no exceptions. Auto-recovery
+#    from any crash without human intervention.
+# 3. healthcheck on EVERY container — Docker restarts unhealthy containers
+#    automatically (unless-stopped + healthcheck = self-healing).
+# 4. depends_on with condition: service_healthy — No container starts before
+#    its dependencies are verified healthy.
+# 5. Resource caps on every service — No single service can OOM the host.
+# 6. Named volumes for logs — Crash logs survive container restarts.
+# 7. Isolated networks — Internal services are not exposed to the outside.
+# ═════════════════════════════════════════════════════════════════════════════
+
+# ── Networks ─────────────────────────────────────────────────────────────────
+# internal — no external access, for backend-to-backend communication
+# public   — only the client/nginx is exposed to the outside world
+networks:
+  internal:
+    driver: bridge
+    internal: true
+    name: hermes-internal
+  public:
+    driver: bridge
+    name: hermes-public
+  gmaps:
+    driver: bridge
+    name: hermes-gmaps
+
+# ── Volumes ──────────────────────────────────────────────────────────────────
+# Named volumes so data persists across container restarts.
+volumes:
+  redis_data:
+    driver: local
+    name: hermes-redis-data
+  redis_logs:
+    driver: local
+    name: hermes-redis-logs
+  server_logs:
+    driver: local
+    name: hermes-server-logs
+  client_logs:
+    driver: local
+    name: hermes-client-logs
+  gmaps_logs:
+    driver: local
+    name: hermes-gmaps-logs
+  gmaps_data:
+    driver: local
+    name: hermes-gmaps-data
+
+# ═════════════════════════════════════════════════════════════════════════════
+# SERVICES
+# ═════════════════════════════════════════════════════════════════════════════
+services:
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # REDIS — AI response cache and session store
+  # Isolated in its own container. If Redis crashes, only caching is affected.
+  # The server falls back to in-memory cache gracefully.
+  # ────────────────────────────────────────────────────────────────────────────
+  redis:
+    image: hermes-redis:latest
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.redis
+    container_name: hermes-redis
+    restart: unless-stopped
+    networks:
+      - internal
+    expose:
+      - "6379"
+    volumes:
+      - redis_data:/data
+      - redis_logs:/var/log/hermes
+      - ./docker/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    environment:
+      - SERVICE_NAME=redis
+    deploy:
+      resources:
+        limits:
+          memory: 300M
+          cpus: "0.5"
+        reservations:
+          memory: 128M
+    healthcheck:
+      test: ["CMD-SHELL", "/usr/local/bin/healthcheck.sh redis 6379 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # SERVER — Node.js Express API (PM2-supervised)
+  # All CRUD, auth, AI, CRM, accounting, BIR, chatbot logic.
+  # Protected by requireAuth on every workspace route.
+  # Depends on: Redis (healthy)
+  # Depends on: gmaps (healthy) — for Google Maps lead scraping via HTTP API
+  # ────────────────────────────────────────────────────────────────────────────
+  server:
+    image: hermes-server:latest
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.server
+    container_name: hermes-server
+    restart: unless-stopped
+    networks:
+      - internal
+      - gmaps
+    expose:
+      - "5000"
+    volumes:
+      - server_logs:/var/log/hermes
+    environment:
+      NODE_ENV: production
+      PORT: "5000"
+      SERVICE_NAME: server
+      # PM2 tuning
+      PM2_INSTANCES: "1"
+      PM2_MAX_MEMORY: "450M"
+      # Supabase
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      # AI providers
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      NVIDIA_API_KEY: ${NVIDIA_API_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      OPENCLAUDE_API_KEY: ${OPENCLAUDE_API_KEY}
+      XAI_API_KEY: ${XAI_API_KEY}
+      HOME_GROQ_API_KEY: ${HOME_GROQ_API_KEY}
+      # Email
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_SECURE: ${SMTP_SECURE}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      EMAIL_FROM: ${EMAIL_FROM}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY}
+      UNSUBSCRIBE_SECRET: ${UNSUBSCRIBE_SECRET}
+      # Stripe
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      STRIPE_STARTER_PRICE_ID: ${STRIPE_STARTER_PRICE_ID}
+      STRIPE_PROFESSIONAL_PRICE_ID: ${STRIPE_PROFESSIONAL_PRICE_ID}
+      STRIPE_ENTERPRISE_PRICE_ID: ${STRIPE_ENTERPRISE_PRICE_ID}
+      # URLs
+      FRONTEND_URL: ${FRONTEND_URL}
+      BACKEND_URL: ${BACKEND_URL}
+      # Redis — resolve via Docker DNS
+      REDIS_URL: redis://redis:6379
+      # Facebook — container env names MUST match what the code reads
+      # (server reads FB_VERIFY_TOKEN, FB_PAGE_ACCESS_TOKEN; omnichannel reads
+      # FACEBOOK_APP_SECRET). Host vars follow .env.example (FB_* naming).
+      FB_PAGE_ACCESS_TOKEN: ${FB_PAGE_ACCESS_TOKEN:-}
+      FB_VERIFY_TOKEN: ${FB_VERIFY_TOKEN:-}
+      FACEBOOK_APP_SECRET: ${FB_APP_SECRET:-}
+      # Google Maps (now calls isolated microservice)
+      GMAPS_SERVICE_URL: http://gmaps:8000
+      SERPER_API_KEY: ${SERPER_API_KEY}
+      # PayMongo (PH payment gateway — optional, COD works without key)
+      PAYMONGO_SECRET_KEY: ${PAYMONGO_SECRET_KEY:-}
+      PAYMONGO_WEBHOOK_SECRET: ${PAYMONGO_WEBHOOK_SECRET:-}
+      # Feature flags
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      ENABLE_AI_CACHING: ${ENABLE_AI_CACHING:-true}
+      ENABLE_RATE_LIMITING: ${ENABLE_RATE_LIMITING:-true}
+      WAIT_FOR_REDIS: "true"
+    depends_on:
+      redis:
+        condition: service_healthy
+      gmaps:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+        reservations:
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "/usr/local/bin/healthcheck.sh server 5000 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "5"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    stop_grace_period: 30s
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # CLIENT — React SPA served by Nginx
+  # Nginx reverse-proxies /api/* to the server container.
+  # This is the only container exposed to the internet (port 80).
+  # Depends on: server (healthy) — nginx will 502 until server is ready
+  # ────────────────────────────────────────────────────────────────────────────
+  client:
+    image: hermes-client:latest
+    container_name: hermes-client
+    restart: unless-stopped
+    networks:
+      - public
+      - internal
+    ports:
+      - "80:80"
+    volumes:
+      - client_logs:/var/log/hermes
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.client
+      args:
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
+        VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+        VITE_API_URL: ${VITE_API_URL}
+        VITE_BACKEND_URL: ${VITE_BACKEND_URL}
+        VITE_RECAPTCHA_SITE_KEY: ${VITE_RECAPTCHA_SITE_KEY:-}
+        VITE_META_PIXEL_ID: ${VITE_META_PIXEL_ID:-}
+        VITE_PUBLIC_SITE_URL: ${VITE_PUBLIC_SITE_URL:-}
+        VITE_RENDER_CUSTOM_DOMAIN_TARGET: ${VITE_RENDER_CUSTOM_DOMAIN_TARGET:-}
+    environment:
+      SERVICE_NAME: client
+      WAIT_FOR_SERVER: "true"
+      SERVER_HOST: server
+      SERVER_PORT: 5000
+    depends_on:
+      server:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.25"
+        reservations:
+          memory: 64M
+    healthcheck:
+      test: ["CMD-SHELL", "/usr/local/bin/healthcheck.sh client 80 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    stop_grace_period: 15s
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # GMAPS — Google Maps Lead Generator (Python Flask Microservice)
+  # ISOLATED CONTAINER — Previously spawned as a child process in Node.js.
+  # Now runs as a standalone HTTP service. Communicates with server via HTTP.
+  # If this crashes, only lead generation is affected. Server API stays up.
+  # Depends on: nothing external (self-contained Python service)
+  # ────────────────────────────────────────────────────────────────────────────
+  gmaps:
+    image: hermes-gmaps:latest
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.gmaps
+    container_name: hermes-gmaps
+    restart: unless-stopped
+    networks:
+      - gmaps
+    expose:
+      - "8000"
+    volumes:
+      - gmaps_logs:/var/log/hermes
+      - gmaps_data:/app/output
+    environment:
+      SERVICE_NAME: gmaps
+      FLASK_PORT: "8000"
+      SERPER_API_KEY: ${SERPER_API_KEY}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      LLM_MODEL: ${LLM_MODEL:-mistralai/mistral-7b-instruct}
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+        reservations:
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "/usr/local/bin/healthcheck.sh gmaps 8000 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    stop_grace_period: 60s  # Long-running searches may need time to drain
+

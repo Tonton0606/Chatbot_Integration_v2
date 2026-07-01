@@ -1,0 +1,96 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# HERMES v2.2.1 — Server Container (Multi-Stage Build)
+# Stage 1: deps     — Install Node dependencies (layer-cached)
+# Stage 2: python   — Install Python dependencies for gmaps (if bundled)
+# Stage 3: runtime  — Minimal production image with PM2 + supervisor
+#
+# Service isolation: used in docker-compose as a standalone Node API server.
+# The gmaps Python microservice runs in its own container via docker-compose.
+# However, supervisor is still included in case extra process management
+# is needed inside this container.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Stage 1: Node Dependencies ──────────────────────────────────────────────
+FROM node:20-alpine AS deps
+
+WORKDIR /app
+
+COPY server/package*.json ./
+
+# Install ALL deps (including dev for build tools) then prune to prod
+RUN npm ci && npm cache clean --force
+
+# ── Stage 2: Python Dependencies (for gmaps src modules used via HTTP) ─────
+FROM python:3.11-alpine AS python-deps
+
+WORKDIR /app
+
+COPY server/services/googleMapsLeads/requirements.txt /tmp/gmaps-requirements.txt
+
+RUN pip install --no-cache-dir -r /tmp/gmaps-requirements.txt && \
+    rm /tmp/gmaps-requirements.txt
+
+# ── Stage 3: Production Runtime ─────────────────────────────────────────────
+FROM node:20-alpine AS runtime
+
+WORKDIR /app
+
+# ── Install system packages ─────────────────────────────────────────────────
+# Minimal set: curl for healthcheck, dumb-init for PID 1, supervisor for
+# process management, netcat for port waits, python3 for gmaps scripts
+RUN apk add --no-cache \
+    curl \
+    dumb-init \
+    supervisor \
+    netcat-openbsd \
+    python3 \
+    py3-pip \
+    ca-certificates \
+    tzdata \
+    && rm -rf /var/cache/apk/*
+
+# ── Install PM2 globally ───────────────────────────────────────────────────
+RUN npm install -g pm2@latest && npm cache clean --force
+
+# ── Create directories ─────────────────────────────────────────────────────
+RUN mkdir -p /var/log/hermes /var/run /app/services/googleMapsLeads/output
+
+# ── Copy Node dependencies ─────────────────────────────────────────────────
+COPY --from=deps /app/node_modules ./node_modules
+
+# ── Copy application source ────────────────────────────────────────────────
+COPY server/ .
+
+# ── Copy Python dependencies (for gmaps src modules) ───────────────────────
+COPY --from=python-deps /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+
+# ── Copy infrastructure scripts ────────────────────────────────────────────
+COPY docker/pm2.config.js /app/pm2.config.js
+COPY docker/supervisor.conf /etc/supervisor.d/hermes.ini
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY docker/healthcheck.sh /usr/local/bin/healthcheck.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/healthcheck.sh
+
+# ── Environment defaults ────────────────────────────────────────────────────
+ENV NODE_ENV=production \
+    PORT=5000 \
+    SERVICE_NAME=server \
+    PYTHONUNBUFFERED=1
+
+# ── Non-root user ──────────────────────────────────────────────────────────
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001 && \
+    chown -R nodejs:nodejs /app /var/log/hermes /var/run
+
+USER nodejs
+
+# ── Health check ────────────────────────────────────────────────────────────
+HEALTHCHECK --interval=30s --timeout=10s --start-period=45s --retries=5 \
+    CMD /usr/local/bin/healthcheck.sh server 5000
+
+EXPOSE 5000
+
+# ── Entrypoint ──────────────────────────────────────────────────────────────
+# When running with PM2 only (single process):
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["pm2-runtime", "pm2.config.js"]

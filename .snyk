@@ -1,0 +1,20 @@
+# Snyk (https://snyk.io) policy file
+version: v1.25.1
+ignore:
+  SNYK-JS-INFLIGHT-6095116:
+    - jest > @jest/core > @jest/reporters > glob > inflight:
+        reason: >
+          inflight@1.0.6 is a transitive dependency of jest@29 (dev-only, never
+          shipped to production). Memory leaks in inflight are not exploitable in
+          short-lived test processes. No upgrade path within jest@29; accepted risk
+          pending jest@30 migration. CWE-772, CVSS 6.2.
+        expires: '2026-12-31T00:00:00.000Z'
+  GHSA-w5hq-g745-h8pq:
+    - exceljs > uuid:
+        reason: >
+          exceljs@4.4.0 is the latest release and uses uuid internally for
+          cell ID generation — it never passes user-supplied buf to uuid.v3/v5/v6.
+          No upgrade path exists without downgrading exceljs (breaking Excel exports).
+          Accepted risk: moderate severity, not exploitable via this code path.
+        expires: '2026-12-31T00:00:00.000Z'
+patch: {}

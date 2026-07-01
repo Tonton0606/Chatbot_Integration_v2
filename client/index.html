@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/src/assets/EXPONIFY_LOGO.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#d4a017" />
+    <meta name="description" content="All-in-one CRM, Marketing, Accounting & AI Platform for Philippine SMEs" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Exponify" />
+    <link rel="apple-touch-icon" href="/src/assets/EXPONIFY_LOGO.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <title>ExponifyPH</title>
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for (let registration of registrations) {
+            registration.unregister();
+          }
+        });
+      }
+    </script>
+    <script>
+      window.fbAsyncInit = function() {
+        var appId = '%VITE_FACEBOOK_APP_ID%';
+        if (appId && appId !== '%VITE_FACEBOOK_APP_ID%' && window.FB) {
+          window.FB.init({
+            appId: appId,
+            cookie: true,
+            xfbml: false,
+            version: 'v22.0',
+          });
+          window.fbSdkReady = true;
+        }
+      };
+      (function(d, s, id) {
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) return;
+        js = d.createElement(s); js.id = id;
+        js.src = 'https://connect.facebook.net/en_US/sdk.js';
+        fjs.parentNode.insertBefore(js, fjs);
+      }(document, 'script', 'facebook-jssdk'));
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

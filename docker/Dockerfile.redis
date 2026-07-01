@@ -1,0 +1,37 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# HERMES v2.2.1 — Redis Container
+# Minimal Alpine-based Redis with custom config and healthcheck.
+# ─────────────────────────────────────────────────────────────────────────────
+
+FROM redis:7-alpine
+
+# Install netcat for healthcheck dependency waits
+RUN apk add --no-cache netcat-openbsd curl
+
+# Copy custom redis config
+COPY docker/redis.conf /usr/local/etc/redis/redis.conf
+
+# Copy entrypoint for graceful shutdown
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Copy healthcheck probe
+COPY docker/healthcheck.sh /usr/local/bin/healthcheck.sh
+RUN chmod +x /usr/local/bin/healthcheck.sh
+
+# Create log directory
+RUN mkdir -p /var/log/hermes && chmod 755 /var/log/hermes
+
+# Non-root user
+USER redis
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+  CMD /usr/local/bin/healthcheck.sh redis 6379
+
+EXPOSE 6379
+
+ENV SERVICE_NAME=redis
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh", "--"]
+CMD ["redis-server", "/usr/local/etc/redis/redis.conf"]

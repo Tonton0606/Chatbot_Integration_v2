@@ -1,0 +1,364 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600;1,700;1,800&display=swap');
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "./styles/unified-theme.css";
+@import "./styles/intelligence/intelligence.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-card-border: hsl(var(--card-border));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-popover-border: hsl(var(--popover-border));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-primary-border: var(--primary-border);
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-secondary-border: var(--secondary-border);
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-muted-border: var(--muted-border);
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-accent-border: var(--accent-border);
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-destructive-border: var(--destructive-border);
+
+  --font-sans: var(--app-font-sans);
+  --font-serif: var(--app-font-serif);
+  --font-mono: var(--app-font-mono);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+/* Golden Yellow & White Theme */
+:root {
+  /* White/Cream Backgrounds */
+  --background: 0 0% 100%;
+  --foreground: 220 20% 10%;
+
+  /* Elevated Cards, Panels - Warm White */
+  --card: 45 33% 97%;
+  --card-foreground: 220 20% 10%;
+  --card-border: 45 20% 90%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 220 20% 10%;
+  --popover-border: 45 20% 88%;
+
+  /* Golden Yellow Primary */
+  --primary: 45 93% 47%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 45 33% 96%;
+  --secondary-foreground: 220 20% 10%;
+
+  --muted: 45 20% 94%;
+  --muted-foreground: 220 10% 50%;
+
+  /* Rich Gold Accent */
+  --accent: 43 89% 45%;
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 45 20% 88%;
+  --input: 45 20% 90%;
+  --ring: 45 93% 47%;
+
+  --app-font-sans: 'Inter', sans-serif;
+  --app-font-serif: 'Playfair Display', serif;
+  --app-font-mono: Menlo, monospace;
+  --radius: 0.75rem;
+
+  color-scheme: light;
+}
+
+/* Dark Theme - Deep Navy & Golden Yellow */
+.dark {
+  --background: 222 47% 11%;
+  --foreground: 210 40% 98%;
+  --card: 217 33% 17%;
+  --card-foreground: 210 40% 98%;
+  --card-border: 215 28% 17%;
+  --popover: 217 33% 17%;
+  --popover-foreground: 210 40% 98%;
+  --popover-border: 215 28% 17%;
+  --primary: 45 93% 47%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 217 33% 17%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 215 28% 25%;
+  --muted-foreground: 215 20% 65%;
+  --accent: 43 89% 45%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 215 28% 25%;
+  --input: 215 28% 25%;
+  --ring: 45 93% 47%;
+}
+
+@keyframes ambientDrift {
+  0%   { transform: translate(0%, 0%) scale(1); }
+  33%  { transform: translate(3%, -4%) scale(1.06); }
+  66%  { transform: translate(-3%, 3%) scale(0.97); }
+  100% { transform: translate(0%, 0%) scale(1); }
+}
+
+@keyframes ambientDriftB {
+  0%   { transform: translate(0%, 0%) scale(1); }
+  40%  { transform: translate(-4%, 5%) scale(1.08); }
+  70%  { transform: translate(5%, -3%) scale(0.95); }
+  100% { transform: translate(0%, 0%) scale(1); }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-white text-foreground;
+  }
+}
+
+/* Ambient background for dark admin/client shell */
+.dark .admin-shell::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 50% at 15% 20%, rgba(212, 175, 55, 0.055) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 60% at 85% 75%, rgba(103, 232, 249, 0.04) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 40% at 50% 50%, rgba(139, 92, 246, 0.025) 0%, transparent 60%);
+  animation: ambientDrift 18s ease-in-out infinite;
+}
+
+.dark .admin-shell::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 45% 45% at 80% 15%, rgba(212, 175, 55, 0.04) 0%, transparent 65%),
+    radial-gradient(ellipse 55% 40% at 20% 80%, rgba(103, 232, 249, 0.035) 0%, transparent 65%);
+  animation: ambientDriftB 24s ease-in-out infinite;
+}
+
+/* Font utilities matching original */
+.font-inter {
+  font-family: 'Inter', sans-serif;
+}
+
+.font-playfair {
+  font-family: 'Playfair Display', serif;
+}
+
+/* Glassmorphism navbar */
+.nav-glass {
+  background: rgba(8, 11, 20, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* Animation keyframes */
+@keyframes gradientShift {
+  0% {
+    background-position: 0% center;
+  }
+
+  100% {
+    background-position: 200% center;
+  }
+}
+
+@keyframes ping {
+
+  75%,
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.animate-ping {
+  animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* ── Landing page enhancement animations ──────────────────────────────────── */
+
+@keyframes shimmerSweep {
+  0%   { background-position: -200% center; opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { background-position: 200% center; opacity: 0; }
+}
+
+/* Shimmer-border card — add class to any dark card */
+.shimmer-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    108deg,
+    transparent 35%,
+    hsl(45 93% 60% / 0.13) 50%,
+    transparent 65%
+  );
+  background-size: 250% 100%;
+  opacity: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  transition: opacity 0.2s;
+}
+
+.shimmer-card:hover::after {
+  opacity: 1;
+  animation: shimmerSweep 0.75s ease-in-out forwards;
+}
+
+/* Clip-path reveal utility — children slide up from mask */
+.clip-reveal {
+  overflow: hidden;
+}
+/* ==================================================
+   ExponifyPH ERP Shell Theme Overrides
+   Source of truth for admin/client shell tokens
+================================================== */
+
+:root {
+  --bg-app: #f5f7fb;
+  --bg-main: #f5f7fb;
+  --bg-card: #ffffff;
+  --bg-sidebar: #f8fafc;
+  --bg-header: #ffffff;
+  --hover-bg: rgba(15, 23, 42, 0.04);
+
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+
+  --border-color: rgba(15, 23, 42, 0.12);
+
+  --brand-gold: #c9a84c;
+  --brand-gold-hover: #b8953f;
+  --brand-gold-soft: rgba(201, 168, 76, 0.12);
+  --brand-gold-border: rgba(201, 168, 76, 0.35);
+
+  --brand-cyan: #0891b2;
+  --brand-cyan-bright: #67e8f9;
+  --brand-cyan-soft: rgba(8, 145, 178, 0.12);
+  --brand-cyan-border: rgba(8, 145, 178, 0.28);
+
+  --success: #16a34a;
+  --success-soft: rgba(22, 163, 74, 0.12);
+
+  --danger: #dc2626;
+  --danger-soft: rgba(220, 38, 38, 0.12);
+}
+
+.dark {
+  --bg-app: #020617;
+  --bg-main: #020617;
+  --bg-card: #0f172a;
+  --bg-sidebar: #08111f;
+  --bg-header: #0b1220;
+  --hover-bg: rgba(255, 255, 255, 0.06);
+
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+
+  --border-color: rgba(255, 255, 255, 0.1);
+
+  --brand-gold: #d4af37;
+  --brand-gold-hover: #e5c65a;
+  --brand-gold-soft: rgba(212, 175, 55, 0.14);
+  --brand-gold-border: rgba(212, 175, 55, 0.35);
+
+  --brand-cyan: #67e8f9;
+  --brand-cyan-bright: #67e8f9;
+  --brand-cyan-soft: rgba(103, 232, 249, 0.12);
+  --brand-cyan-border: rgba(103, 232, 249, 0.28);
+
+  --success: #22c55e;
+  --success-soft: rgba(34, 197, 94, 0.12);
+
+  --danger: #ef4444;
+  --danger-soft: rgba(239, 68, 68, 0.12);
+}
+
+.input-base {
+  height: 2.75rem;
+  width: 100%;
+  border-radius: 1rem;
+  border: 1px solid var(--border-color);
+  background: var(--bg-main);
+  padding: 0 0.75rem;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  outline: none;
+}
+
+/* ── Custom Scrollbar Utility (used across all modules) ────── */
+.custom-scrollbar::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: var(--hover-bg);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb-color, var(--border-color));
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--scroll-thumb-color, var(--text-muted));
+  filter: brightness(1.1);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:active {
+  background: var(--scroll-thumb-color, var(--text-muted));
+  filter: brightness(1.2);
+}
+
+
+html,
+body,
+#root {
+  min-height: 100%;
+  background: var(--bg-app);
+  color: var(--text-primary);
+}

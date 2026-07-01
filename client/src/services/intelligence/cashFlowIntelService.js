@@ -1,0 +1,39 @@
+import { supabase } from "../../config/supabaseClient";
+
+const BASE = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
+async function authHeaders() {
+  const { data: { session } } = await supabase.auth.getSession();
+  const h = { "Content-Type": "application/json" };
+  if (session?.access_token) h.Authorization = `Bearer ${session.access_token}`;
+  return h;
+}
+
+async function apiFetch(path, options = {}) {
+  const headers = { ...(await authHeaders()), ...options.headers };
+  const res = await fetch(`${BASE}${path}`, { ...options, headers });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json.error || `API error ${res.status}`);
+  return json;
+}
+
+export const CASH_FLOW_HORIZONS = [30, 60, 90];
+export const CASH_FLOW_CATEGORIES = ["collections", "payables", "payroll", "tax_obligations", "capex", "operating"];
+
+export async function getCashFlowDashboard(horizon = 30) {
+  const json = await apiFetch(`/intelligence/ph/cashflow?horizon=${horizon}`);
+  return json.data || {};
+}
+
+export async function computeCashFlowProjection(horizon = 90) {
+  const json = await apiFetch("/intelligence/ph/cashflow/compute", {
+    method: "POST",
+    body: JSON.stringify({ horizon }),
+  });
+  return json.data;
+}
+
+export async function getCashFlowTrend() {
+  const data = await computeCashFlowProjection(90);
+  return data;
+}

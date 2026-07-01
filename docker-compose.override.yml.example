@@ -1,0 +1,218 @@
+# =============================================================================
+# docker-compose.override.yml — Dev mode overrides
+# SETUP: cp docker-compose.override.yml.example docker-compose.override.yml
+#
+# Applied automatically by `docker compose up` when named
+# docker-compose.override.yml (no -f flag needed).
+#
+# For production (skips overrides):
+#   docker compose -f docker-compose.yml up -d
+# =============================================================================
+
+version: "3.9"
+
+# ── Observability network (dev only — never touches production) ───────────────
+networks:
+  observability:
+    driver: bridge
+    name: hermes-observability
+
+# ── Observability volumes ─────────────────────────────────────────────────────
+volumes:
+  loki_data:
+    driver: local
+    name: hermes-loki-data
+  grafana_data:
+    driver: local
+    name: hermes-grafana-data
+
+services:
+
+  # ── Redis: expose port in dev for redis-cli from host ────────────────────────
+  redis:
+    ports:
+      - "6379:6379"
+
+  # ── Server: hot-reload + Node inspector + verbose logging ────────────────────
+  server:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.server.dev
+    environment:
+      NODE_ENV: development
+      SERVICE_NAME: "hermes-api-dev"
+      LOG_LEVEL: debug
+      WAIT_FOR_REDIS: "true"
+    volumes:
+      # Live source changes picked up by nodemon
+      - ./server:/app
+      # Keep container's node_modules — never shadow with host's
+      - /app/node_modules
+      - ./docker/pm2.config.js:/app/pm2.config.js:ro
+    ports:
+      # API exposed directly in dev for Postman / curl
+      - "5000:5000"
+      # Node.js inspector — attach from VS Code or chrome://inspect
+      - "9229:9229"
+    command: ["nodemon", "--inspect=0.0.0.0:9229", "server.js"]
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          cpus: "2.00"
+
+  # ── Client: Vite dev server with HMR ─────────────────────────────────────────
+  client:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.client.dev
+    environment:
+      VITE_API_URL: http://localhost:5000
+      CHOKIDAR_USEPOLLING: "true"
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:5173/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          memory: 768m
+          cpus: "1.50"
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # OBSERVABILITY SIDECAR — Dev only. Never runs on Render production.
+  #
+  # Stack: Loki (log store) + Promtail (Docker log scraper) + Grafana (UI)
+  # Zero changes to server/config/logger.js — Pino → stdout → Docker json-file
+  # → Promtail → Loki → Grafana. Production is untouched.
+  #
+  # Access Grafana: http://localhost:3001
+  #   user: admin  pass: hermesdev (override via GRAFANA_ADMIN_PASSWORD)
+  #
+  # For Supabase DB queries in Grafana panels, add to your .env:
+  #   SUPABASE_DB_HOST=db.<project-ref>.supabase.co
+  #   SUPABASE_DB_USER=postgres
+  #   SUPABASE_DB_PASSWORD=<your-db-password>  ← from Supabase Dashboard → DB Settings
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  # ── Loki — log aggregation backend ──────────────────────────────────────────
+  loki:
+    image: hermes-loki:3.0.0
+    container_name: hermes-loki
+    restart: unless-stopped
+    networks:
+      - observability
+    expose:
+      - "3100"
+    volumes:
+      - loki_data:/loki
+      - ./docker/loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+    command: -config.file=/etc/loki/local-config.yaml
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3100/ready || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.25"
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  # ── Promtail — scrapes Docker json-file logs → Loki ─────────────────────────
+  # Needs Docker socket (read-only) to discover containers by name.
+  # Health-check polling and Redis pings are dropped before they reach Loki
+  # (see docker/promtail/promtail-config.yml drop stage).
+  promtail:
+    image: hermes-promtail:3.0.0
+    container_name: hermes-promtail
+    restart: unless-stopped
+    networks:
+      - observability
+    volumes:
+      - ./docker/promtail/promtail-config.yml:/etc/promtail/config.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      loki:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.25"
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  # ── Grafana — observability dashboards ──────────────────────────────────────
+  # Dashboard auto-provisioned from docker/grafana/provisioning/.
+  # Hermes Ops dashboard includes:
+  #   - Log volume per container (timeseries)
+  #   - Error / warning count stats
+  #   - Server log stream (live)
+  #   - Error + warning streams (all containers)
+  #   - x-request-id trace lookup (paste a reqId → see full request across containers)
+  grafana:
+    image: hermes-grafana:11.0.0
+    container_name: hermes-grafana
+    restart: unless-stopped
+    networks:
+      - observability
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-hermesdev}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_ROOT_URL: http://localhost:3001
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      # Supabase direct DB (optional — leave blank to skip DB datasource)
+      SUPABASE_DB_HOST: ${SUPABASE_DB_HOST:-localhost}
+      SUPABASE_DB_USER: ${SUPABASE_DB_USER:-postgres}
+      SUPABASE_DB_PASSWORD: ${SUPABASE_DB_PASSWORD:-}
+    depends_on:
+      loki:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.25"
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"

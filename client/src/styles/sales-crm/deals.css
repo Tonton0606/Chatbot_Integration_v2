@@ -1,0 +1,21 @@
+/* Custom Scrollbar for Deals Pipeline Board */
+.custom-scrollbar::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: var(--hover-bg);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb-color, var(--border-color));
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--scroll-thumb-color, var(--text-muted));
+  filter: brightness(1.1);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:active {
+  background: var(--scroll-thumb-color, var(--text-muted));
+  filter: brightness(1.2);
+}
