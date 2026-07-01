@@ -23,7 +23,7 @@ const ALLOWED_ORIGINS = [...PRODUCTION_ORIGINS, ...DEV_ORIGINS];
 function isAllowedOrigin(origin) {
   if (!origin) return true;
   if (ALLOWED_ORIGINS.includes(origin)) return true;
-  if (/^https:\/\/(hermesv2-frontend|hermesbackend(-[a-z0-9]+)?)\.onrender\.com$/.test(origin)) return true;
+  if (/^https:\/\/(hermesv2-frontend|hermesbackend(-[a-z0-9]+)?|chatbot-integration-[a-zA-Z0-9-]+)\.onrender\.com$/.test(origin)) return true;
   if (IS_DEV && /^http:\/\/(192\.168|10\.|172\.(1[6-9]|2\d|3[0-1]))\.\d+\.\d+(:\d+)?$/.test(origin)) return true;
   return false;
 }

@@ -705,7 +705,23 @@ export default function FacebookConnectModule({ workspaceId: propWorkspaceId, on
               </div>
             </div>
             
-            <div className="border-t border-[var(--border-color)] bg-[var(--bg-main)] p-4 flex justify-end">
+            <div className="border-t border-[var(--border-color)] bg-[var(--bg-main)] p-4 flex justify-between items-center">
+              <button 
+                onClick={async () => {
+                  if (window.confirm(`Are you sure you want to disconnect ${viewingPage.pageName || viewingPage.page_name}?`)) {
+                    try {
+                      await facebookIntegrationService.deletePage(viewingPage.pageId || viewingPage.page_id);
+                      setViewingPage(null);
+                      handleRefresh();
+                    } catch (e) {
+                      alert(e.message || "Failed to disconnect page.");
+                    }
+                  }
+                }} 
+                className="rounded-xl border border-[var(--danger)]/30 px-4 py-2 text-sm font-bold text-[var(--danger)] hover:bg-[var(--danger-soft)] transition-colors"
+              >
+                Disconnect
+              </button>
               <button 
                 onClick={() => setViewingPage(null)} 
                 className="rounded-xl bg-[var(--brand-gold)] px-4 py-2 text-sm font-black text-black hover:bg-[var(--brand-gold-hover)] transition-colors"

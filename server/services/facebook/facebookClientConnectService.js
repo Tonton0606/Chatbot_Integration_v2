@@ -712,7 +712,6 @@ function createFacebookClientConnectService({ supabaseClient }) {
     const { data: existingRecords, error: existingError } = await supabaseClient
       .from("client_facebook_page_settings")
       .select("*")
-      .eq("workspace_id", normalizedWorkspaceId)
       .eq("page_id", normalizedPageId)
       .is("archived_at", null)
       .order("updated_at", { ascending: false })
