@@ -2,7 +2,8 @@
 import { supabase } from '../config/supabaseClient';
 import { clearWorkspaceStorage } from './auth/authActions';
 
-const rawBase = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const envBase = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const rawBase = String(envBase).trim().replace(/\s+/g, '');
 const API_BASE_URL = rawBase.endsWith('/api') ? rawBase : `${rawBase.replace(/\/$/, '')}/api`;
 
 // Read the active workspace so every backend call is tenant-scoped. Server
